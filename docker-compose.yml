@@ -8,12 +8,13 @@
 #   docker compose --profile agent-browser  up -d    # stealthy browser (Camoufox)
 #   docker compose --profile tensorrt-llm   up -d    # TensorRT-LLM release container
 #
-# GPU pinning (ASR): every ASR GPU consumer is pinned to the RTX 5080 via
+# GPU pinning: every GPU consumer is pinned via
 # deploy.resources.reservations.devices.device_ids (host device index, see
-# `nvidia-smi -L`; default 1). The 5090 (device 0) runs the other vLLM /
-# llama.cpp workloads and must never be touched by this stack. Inside each
-# container the pinned GPU is renumbered to cuda:0 — do NOT also set
-# CUDA_VISIBLE_DEVICES, that would hide the reserved device.
+# `nvidia-smi -L`). The ASR stack defaults to the RTX 5080 (device 1); the
+# tensorrt-llm service is dedicated to the RTX 5090 (device 0) - stop other
+# workloads on it before starting. Inside each container the pinned GPU is
+# renumbered to cuda:0 - do NOT also set CUDA_VISIBLE_DEVICES, that would
+# hide the reserved device.
 
 networks:
   ai-lab-inference-net:
@@ -213,6 +214,7 @@ services:
     container_name: tensorrt-llm
     environment:
       HF_TOKEN: ${HF_TOKEN:-}
+      PYTORCH_CUDA_ALLOC_CONF: expandable_segments:True
     volumes:
       - ${HOME}/.cache/huggingface:/root/.cache/huggingface
       # Read-only serve config; see workspaces/trt-llm/config.yaml.
