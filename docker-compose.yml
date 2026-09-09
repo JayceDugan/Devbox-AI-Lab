@@ -1,10 +1,12 @@
 # ai-lab stack — one compose project for every containerised service.
 #
 # A bare `docker compose up -d` starts Open WebUI, Langfuse (included from the
-# services/langfuse submodule), the ONNX embedding service, and the ASR stack
-# (2 vLLM engines + Kokoro TTS + api). Only two services stay profile-gated:
+# services/langfuse submodule), and the ASR stack (2 vLLM engines + Kokoro TTS
+# + api). Profile-gated services:
 #   docker compose --profile unsloth        up -d    # Unsloth Studio
+#   docker compose --profile embeddings     up -d    # ONNX embedding service
 #   docker compose --profile agent-browser  up -d    # stealthy browser (Camoufox)
+#   docker compose --profile tensorrt-llm   up -d    # TensorRT-LLM release container
 #
 # GPU pinning (ASR): every ASR GPU consumer is pinned to the RTX 5080 via
 # deploy.resources.reservations.devices.device_ids (host device index, see
@@ -192,6 +194,53 @@ services:
       timeout: 10s
       start_period: 90s
       retries: 10
+    networks:
+      - ai-lab-inference-net
+
+  # --- TensorRT-LLM (pre-built NGC release container) -------------------------
+  # Option 1 from the TRT-LLM installation guide: pre-built release image with
+  # `--ipc host --gpus all --ulimit memlock=-1 --ulimit stack=67108864`. GPU is
+  # pinned to the 5090 (device 0) per the header note; override with
+  # TRT_LLM_GPU_ID. The host HF cache is mounted at the container's default
+  # location, so models pre-fetched with `hf download` are usable as-is.
+  # Serves the NVFP4 Qwen3.8-27B checkpoint (pre-fetched into the host HF
+  # cache) on :8000 in-container, exposed at 127.0.0.1:8030.
+  # Serve options (backend, reasoning parser, KV cache sizing) live in
+  # workspaces/trt-llm/config.yaml, passed via --config.
+  tensorrt-llm:
+    profiles: ["tensorrt-llm"]
+    image: nvcr.io/nvidia/tensorrt-llm/release:${TRT_LLM_TAG:-1.3.0rc26}
+    container_name: tensorrt-llm
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - ${HOME}/.cache/huggingface:/root/.cache/huggingface
+      # Read-only serve config; see workspaces/trt-llm/config.yaml.
+      - ./workspaces/trt-llm:/opt/trtllm-config:ro
+    ipc: host
+    ulimits:
+      memlock: -1
+      stack: 67108864
+    ports:
+      # Loopback-only; services on the compose network reach it at
+      # http://tensorrt-llm:8000.
+      - "0.0.0.0:${TRT_LLM_PORT:-8030}:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["${TRT_LLM_GPU_ID:-0}"]
+              capabilities: [gpu]
+    command:
+      - trtllm-serve
+      - ${TRT_LLM_MODEL_ID:-nvidia/Qwen3.8-27B-NVFP4}
+      - --config
+      - /opt/trtllm-config/config.yaml
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8000"
     networks:
       - ai-lab-inference-net
 

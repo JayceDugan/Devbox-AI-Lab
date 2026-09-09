@@ -1,0 +1,28 @@
+# trtllm-serve configuration for the Qwen3.8-27B NVFP4 checkpoint.
+# Mounted read-only into the container and passed via `--config` (see the
+# tensorrt-llm service in docker-compose.yml). Explicit CLI flags take
+# precedence over values here; unset flags fall back to this file.
+#
+# Schema: tensorrt_llm.llmapi.LlmArgs — https://nvidia.github.io/TensorRT-LLM/llm-api/reference.html
+# Keys are validated strictly (extra="forbid"), so unknown fields fail startup.
+
+backend: pytorch
+reasoning_parser: qwen3_5
+
+# Single-request serving: the engine schedules at most one request, so every
+# KV cache block is available to a single 16k-token sequence, and CUDA graph
+# capture stays limited to batch size 1 (lower VRAM use than the default
+# max_batch_size of 2048).
+max_batch_size: 1
+max_seq_len: 32768
+max_num_tokens: 32768
+
+kv_cache_config:
+  # New KV cache manager (prototype in 1.3.x).
+  use_kv_cache_manager_v2: true
+  # Fraction of free GPU memory (after weights + buffers) reserved for the KV
+  # cache; upstream default is 0.9. Pushed to 0.97 on this dedicated 5090 —
+  # activation headroom stays bounded by max_num_tokens, so back off toward
+  # 0.9 only if prefill OOMs or another workload shares device 0.
+  free_gpu_memory_fraction: 0.85
+  enable_block_reuse: true
