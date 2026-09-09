@@ -338,11 +338,7 @@ services:
         condition: service_healthy
     healthcheck:
       # First start downloads ~0.4 GB of weights + voices; torch import is slow.
-      test:
-        [
-          "CMD-SHELL",
-          "curl -fsS http://127.0.0.1:8000/health || exit 1",
-        ]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/health || exit 1"]
       interval: 15s
       timeout: 10s
       start_period: 600s
