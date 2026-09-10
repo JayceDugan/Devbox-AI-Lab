@@ -1,6 +1,8 @@
 .env
 .mcp.json
 node_modules/
+.zvec-grep/
+
 services/asr/api/asr-api
 
 workspaces/beszel
