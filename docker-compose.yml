@@ -246,6 +246,11 @@ services:
       - "0.0.0.0"
       - --port
       - "8000"
+      # Auto-selected parser for qwen3_5 is a JSON tool-call parser, but this
+      # checkpoint emits Qwen3-Coder-style XML (< function=...>); pin the
+      # matching parser (NVIDIA/TensorRT-LLM#18084).
+      - --tool_parser
+      - qwen3_coder
     networks:
       - ai-lab-inference-net
 
