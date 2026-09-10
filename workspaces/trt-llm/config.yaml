@@ -29,10 +29,34 @@ max_num_tokens: 8192
 # v2 manager gets its quota from free_gpu_memory_fraction, capped by
 # kv_cache_config.max_tokens below.
 
-# MTP speculative decoding is intentionally NOT configured: no drafter is
-# loaded, and the "GDN MTP replay is requested" line in startup logs is only a
-# report of the TRTLLM_USE_GDN_REPLAY env default (on) - it does not mean MTP
-# is active. Do not add speculative_config without budgeting its VRAM cost.
+# MTP speculative decoding: the checkpoint ships one MTP layer
+# (mtp_num_hidden_layers: 1, 15 mtp.* tensors). TRT-LLM 1.3.x reads it
+# directly via one-model ("EAGLE-style") drafting, so no separate drafter
+# model is required - the earlier assumption that "no drafter is loaded"
+# does not hold for this checkpoint. Each decode iteration drafts up to
+# max_draft_len tokens; all are verified in a single target-model pass.
+#
+# Side benefit: the fast GDN replay state-update path (TRTLLM_USE_GDN_REPLAY,
+# on by default) only activates when speculative decoding is configured; with
+# it off the 48 gated-delta-net layers used the slower non-replay kernel
+# (startup log: "GDN replay kernel requires speculative decoding").
+#
+# VRAM budget: the MTP layer weights cost ~0.2-0.3 GiB in NVFP4 and its
+# full-attention KV adds 2048 B per cached token (17th attention slot). The
+# device KV quota therefore drops from ~4.0 to ~3.7 GiB, so
+# kv_cache_config.max_tokens below is reduced to keep the longest session
+# fully on-device.
+speculative_config:
+  decoding_type: MTP
+  # max_draft_len is deliberately small. tokens_per_gen_step = 1 + drafts
+  # must stay <= 8 for the GDN replay fast path (startup gate: "GDN MTP
+  # replay is requested" / "supports at most 8 tokens per generation step"),
+  # and every draft token costs an extra full KV-cache query in this hybrid
+  # model. draft=8 measured parity with plain greedy decode (~70 tok/s,
+  # replay still disabled); draft=2 keeps replay enabled (1+2=3 positions)
+  # with a cheap per-step draft cost.
+  max_draft_len: 2
+
 
 kv_cache_config:
   # New KV cache manager (prototype in 1.3.x). Auto-provisions a host tier
@@ -44,11 +68,13 @@ kv_cache_config:
   # 0.85 only if prefill OOMs or another workload shares device 0.
   free_gpu_memory_fraction: 0.9
   enable_block_reuse: true
-  # The checkpoint's KV metadata is BF16 (64 KiB/token for this hybrid model:
-  # 16 full-attention layers x 4 KV heads x 256 dim). FP8 halves it to
-  # 32 KiB/token; negligible quality impact on a GDN-hybrid model.
+  # Checkpoint KV metadata: 16 full-attention layers x 4 KV heads x 256 dim.
+  # BF16 would be 64 KiB/token; FP8 halves it to 32 KiB/token. The MTP draft
+  # layer adds one more full-attention slot, so with MTP enabled the cost is
+  # 17 x 2048 B = 34816 B/token.
   dtype: fp8
-  # Hard cap on device-resident KV: ~120k tokens (~4.4 GiB in FP8) - under
-  # the 4.60 GiB that initialized cleanly on this card. Longer sequences
-  # spill to the host tier automatically.
-  max_tokens: 120000
+  # Hard cap on device-resident KV. With MTP enabled the device quota is ~3.7
+  # GiB after weights (~108k tokens at 34816 B/token); 100k keeps the longest
+  # on-device session under the quota with spare, instead of spilling to the
+  # host tier. (Pre-MTP this was 120000 under the ~4.0 GiB quota.)
+  max_tokens: 100000
