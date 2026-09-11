@@ -11,7 +11,7 @@ symlink_if_not_exists() {
 		echo "Symlinking $symlink_source_path to $symlink_destination_path";
 		ln -s $symlink_source_path $symlink_destination_path;
 	else
-		echo "Symlink or directory already exists at $symlink_destination_path";
+		echo "Symlink or directory already exists at $symlink_destination_path, ignoring.";
 	fi
 }
 
