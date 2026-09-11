@@ -19,4 +19,9 @@ symlink_astrovim() {
 	symlink_if_not_exists "$(pwd)/nvim/" "$HOME/.config/nvim"
 }
 
+symlink_tmux() {
+	symlink_if_not_exists "$(pwd)/tmux/" "$HOME/.config/tmux"
+}
+
 symlink_astrovim
+symlink_tmux
