@@ -23,5 +23,10 @@ symlink_tmux() {
 	symlink_if_not_exists "$(pwd)/tmux/" "$HOME/.config/tmux"
 }
 
+symlink_bashrc() {
+	symlink_if_not_exists "$(pwd)/bashrc/.bashrc" "$HOME/.bashrc"
+}
+
 symlink_astrovim
 symlink_tmux
+symlink_bashrc
