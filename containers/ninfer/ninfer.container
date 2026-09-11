@@ -1,0 +1,11 @@
+
+[Unit]
+Description=Ninfer inference server
+
+[Container]
+Image=
+ContainerName=ninfer
+PublishPort:8000:8000
+
+[Service]
+Restart=Always
