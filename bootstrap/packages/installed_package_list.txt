@@ -15,6 +15,7 @@ neovim
 nvidia-container-toolkit
 nvidia-open-dkms
 openssh
+podlet
 podman
 snapper
 sudo
