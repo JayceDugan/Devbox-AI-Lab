@@ -1,0 +1,37 @@
+FROM archlinux:latest
+
+# Update all system packages and dependencies
+RUN pacman -Syu --noconfirm \
+    git \
+    cmake \
+    ninja \
+    base-devel \
+    cuda \
+    ffmpeg \
+    pkgconf \
+    curl
+
+# Add CUDA binaries to PATH and set the Toolkit root for CMake
+ENV PATH="/opt/cuda/bin:${PATH}"
+ENV CUDAToolkit_ROOT="/opt/cuda"
+
+RUN git clone https://github.com/Neroued/ninfer.git /app/ninfer
+
+WORKDIR /app/ninfer
+
+RUN cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+RUN cmake --build build -j
+
+# Start ninfer-serve pointing to the mounted /models directory
+CMD ["./build/apps/ninfer-serve", "/models/qwen3_8_27b_nvfp4.ninfer", \
+     "--max-context", "240000", \
+     "--kv-capacity", "240000", \
+     "--max-concurrency", "2", \
+     "--kv-dtype", "fp8", \
+     "--device-state-slots", "2", \
+     "--host-state-slots", "8", \
+     "--host-kv-mib", "8192", \
+     "--spec", "mtp", \
+     "--draft-tokens", "3", \
+     "--lm-head-draft", \
+     "--preserve-thinking"]

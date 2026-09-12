@@ -1,11 +1,11 @@
-
 [Unit]
 Description=Ninfer inference server
 
 [Container]
-Image=
+Image=ai-lab/ninfer-server:latest
 ContainerName=ninfer
 PublishPort:8000:8000
-
-[Service]
-Restart=Always
+# Mount the exact snapshot directory to /models
+Volume=/srv/models/hub/models--neroued--Qwen3.8-27B-nvfp4-NInfer/snapshots/11dbbbbbc33db198afe2f02c9232c771ff7031be:/models:ro
+# Pipe through RTX 5090
+AddDevice=nvidia.com/gpu=0
