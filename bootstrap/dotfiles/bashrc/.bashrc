@@ -22,3 +22,5 @@ export HF_HOME="/srv/models"
 
 # Set OPENSHELL_DRIVERS for OpenShell
 export OPENSHELL_DRIVERS=podman
+
+alias agent='openshell sandbox create --from localhost/ai-lab/openshell-pi-sandbox'
