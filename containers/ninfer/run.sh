@@ -6,14 +6,15 @@ podman run --rm -it \
   -p 8088:8088 \
   ai-lab/ninfer-server:latest \
   ./build/apps/ninfer-serve /models/snapshots/11dbbbbbc33db198afe2f02c9232c771ff7031be/qwen3_8_27b_nvfp4.ninfer \
-  --max-context 240000 \
-  --kv-capacity 240000 \
-  --max-concurrency 2 \
+  --max-context 131072 \
+  --kv-capacity auto \
+  --max-concurrency 4 \
   --kv-dtype fp8 \
-  --device-state-slots 2 \
-  --host-state-slots 8 \
-  --host-kv-mib 8192 \
-  --spec mtp --draft-tokens 3 \
+  --device-state-slots 4 \
+  --host-state-slots 12 \
+  --host-kv-mib 12288 \
+  --spec mtp \
+  --draft-tokens 3 \
   --lm-head-draft \
   --preserve-thinking \
   --host 0.0.0.0 \
