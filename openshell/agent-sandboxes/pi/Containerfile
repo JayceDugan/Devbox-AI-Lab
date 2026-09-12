@@ -17,8 +17,20 @@ USER root
 # Install pi
 RUN npm install -g @earendil-works/pi-coding-agent
 
+# File-search binaries used by pi's tools. Installed at build time because the
+# sandbox has no egress to the hosts pi's on-demand downloader would use
+# (policy.yaml grants no registry/general downloads). pi's tool manager finds
+# them via system PATH: "rg" (package ripgrep) and "fdfind" (package fd-find
+# — Ubuntu's name for fd; pi checks both "fd" and "fdfind").
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ripgrep fd-find \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy sandbox policy
 COPY policy.yaml /etc/openshell/policy.yaml
+
+# Configure pi to use the OpenShell local inference endpoint (https://inference.local)
+COPY --chown=sandbox:sandbox pi-config/ /sandbox/.pi/agent/
 
 USER sandbox
 

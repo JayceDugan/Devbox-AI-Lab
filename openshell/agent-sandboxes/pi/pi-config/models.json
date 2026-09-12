@@ -1,0 +1,26 @@
+{
+  "providers": {
+    "openshell": {
+      "baseUrl": "https://inference.local/v1",
+      "api": "openai-completions",
+      "apiKey": "unused",
+      "models": [
+        {
+          "id": "qwen3.8-27b",
+          "name": "Qwen3.8 27B NVFP4 (OpenShell local)",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 240000,
+          "maxTokens": 8192,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 },
+          "compat": {
+            "supportsDeveloperRole": false,
+            "supportsReasoningEffort": true,
+            "maxTokensField": "max_tokens",
+            "thinkingFormat": "qwen-chat-template"
+          }
+        }
+      ]
+    }
+  }
+}
