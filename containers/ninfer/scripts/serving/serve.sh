@@ -8,11 +8,11 @@ podman run --rm -it \
   ./build/apps/ninfer-serve /models/snapshots/11dbbbbbc33db198afe2f02c9232c771ff7031be/qwen3_8_27b_nvfp4.ninfer \
   --max-context 240000 \
   --kv-capacity 240000 \
-  --max-concurrency 2 \
+  --max-concurrency 4 \
   --kv-dtype fp8 \
-  --device-state-slots 2 \
+  --device-state-slots 4 \
   --host-state-slots 8 \
-  --host-kv-mib 8192 \
+  --host-kv-mib 32768 \
   --spec mtp \
   --draft-tokens 3 \
   --lm-head-draft \

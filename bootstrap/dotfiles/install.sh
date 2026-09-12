@@ -20,7 +20,7 @@ symlink_astrovim() {
 }
 
 symlink_tmux() {
-	symlink_if_not_exists "$(pwd)/tmux/" "$HOME/.config/tmux"
+	symlink_if_not_exists "$(pwd)/tmux/.tmux.conf" "$HOME/.tmux.conf"
 }
 
 symlink_bashrc() {

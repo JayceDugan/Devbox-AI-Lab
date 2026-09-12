@@ -19,3 +19,6 @@ export PATH="/home/jayce/.local/bin:$PATH"
 
 # Store HF models in BTRFS subvolume 
 export HF_HOME="/srv/models"
+
+# Set OPENSHELL_DRIVERS for OpenShell
+export OPENSHELL_DRIVERS=podman
