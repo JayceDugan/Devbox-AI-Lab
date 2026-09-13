@@ -1,0 +1,145 @@
+# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+version: 1
+
+# ── Static (locked at sandbox creation; included for completeness) ──────────
+
+filesystem_policy:
+  include_workdir: true
+  read_only:
+    - /usr
+    - /lib
+    - /proc
+    - /dev/urandom
+    - /app
+    - /etc
+    - /var/log
+  read_write:
+    - /sandbox
+    - /tmp
+    - /dev/null
+
+landlock:
+  compatibility: best_effort
+
+# ── Dynamic (hot-reloadable — this is the part `policy set` actually applies) ─
+
+network_policies:
+
+  # Claude Code ↔ Anthropic API
+  claude_code:
+    name: claude-code
+    endpoints:
+      - { host: api.anthropic.com, port: 443, protocol: rest, enforcement: enforce, access: full }
+      - { host: statsig.anthropic.com, port: 443 }
+      - { host: sentry.io, port: 443 }
+      - { host: raw.githubusercontent.com, port: 443 }
+      - { host: platform.claude.com, port: 443 }
+    binaries:
+      - { path: /usr/local/bin/claude }
+      - { path: /usr/bin/node }
+
+  # ── GitHub: git operations (clone, fetch, push) ──────────────
+  github_git:
+    name: github-git
+    endpoints:
+      - host: github.com
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow:
+              method: GET
+              path: "/JayceDugan/sandbox-test-repository.git/info/refs*"
+          - allow:
+              method: POST
+              path: "/JayceDugan/sandbox-test-repository.git/git-upload-pack"
+          - allow:
+              method: POST
+              path: "/JayceDugan/sandbox-test-repository.git/git-receive-pack"
+    binaries:
+      - { path: /usr/bin/git }
+      - { path: /usr/bin/curl }
+
+  # ── GitHub: REST + GraphQL API ────────────────────────────────
+  github_api:
+    name: github-api
+    endpoints:
+      - host: api.github.com
+        port: 443
+        path: "/repos/JayceDugan/sandbox-test-repository/**"
+        protocol: rest
+        enforcement: enforce
+        rules:
+          # Full read-write access to the repository (covers PR creation via REST)
+          - allow:
+              method: "*"
+              path: "/repos/JayceDugan/sandbox-test-repository/**"
+      - host: api.github.com
+        port: 443
+        path: "/graphql"
+        protocol: graphql
+        enforcement: enforce
+        rules:
+          # GitHub GraphQL API (used by gh CLI)
+          - allow:
+              operation_type: query
+          - allow:
+              operation_type: mutation
+              fields: [createIssue, updateIssue, addComment, createPullRequest]
+        deny_rules:
+          - operation_type: mutation
+            fields: [deleteRepository, deleteRef, updateBranchProtectionRule]
+    binaries:
+      - { path: /usr/local/bin/claude }
+      - { path: /sandbox/.local/bin/omp }
+      - { path: /usr/bin/gh }
+      - { path: /usr/bin/curl }
+
+  # ── Package managers ─────────────────────────────────────────
+  # NOTE: github.com here is credential-free traffic only (public release
+  # tarball downloads for python-build-standalone). protocol: rest is set
+  # so the proxy can L7-inspect it rather than tripping the
+  # allow_uninspected_credentials check if a credential ever appears on
+  # a connection from these binaries.
+  pypi:
+    name: pypi
+    endpoints:
+      - { host: pypi.org, port: 443 }
+      - { host: files.pythonhosted.org, port: 443 }
+      - host: github.com
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow:
+              method: GET
+              path: "/**"
+      - { host: objects.githubusercontent.com, port: 443 }
+      - { host: api.github.com, port: 443 }
+      - { host: downloads.python.org, port: 443 }
+    binaries:
+      - { path: /sandbox/.venv/bin/python }
+      - { path: /sandbox/.venv/bin/python3 }
+      - { path: /sandbox/.venv/bin/pip }
+      - { path: /app/.venv/bin/python }
+      - { path: /app/.venv/bin/python3 }
+      - { path: /app/.venv/bin/pip }
+      - { path: /usr/local/bin/uv }
+      - { path: "/sandbox/.uv/python/**" }
+
+  # ── VS Code Remote ──────────────────────────────────────────
+  vscode:
+    name: vscode
+    endpoints:
+      - { host: update.code.visualstudio.com, port: 443 }
+      - { host: "*.vo.msecnd.net", port: 443 }
+      - { host: vscode.download.prss.microsoft.com, port: 443 }
+      - { host: marketplace.visualstudio.com, port: 443 }
+      - { host: "*.gallerycdn.vsassets.io", port: 443 }
+    binaries:
+      - { path: /usr/bin/curl }
+      - { path: /usr/bin/wget }
+      - { path: "/sandbox/.vscode-server/**" }
+      - { path: "/sandbox/.vscode-remote-containers/**" }

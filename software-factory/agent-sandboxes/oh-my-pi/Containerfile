@@ -29,6 +29,8 @@ USER sandbox
 
 # Add omp install directory to PATH
 RUN echo 'export PATH="$PATH:/sandbox/.local/bin"' >> /sandbox/.bashrc
+RUN echo 'alias omp="omp --allow-home"' >> /sandbox/.bashrc
+
 ENV PATH="/sandbox/.local/bin:${PATH}"
 
 RUN curl -fsSL https://omp.sh/install | sh
