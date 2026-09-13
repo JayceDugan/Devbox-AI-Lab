@@ -32,7 +32,6 @@ RUN echo 'export PATH="$PATH:/sandbox/.local/bin"' >> /sandbox/.bashrc
 ENV PATH="/sandbox/.local/bin:${PATH}"
 
 RUN curl -fsSL https://omp.sh/install | sh
-RUN git clone https://github.com/JayceDugan/Devbox-AI-Lab.git
 
 # Configure pi to use the OpenShell local inference endpoint (https://inference.local)
 COPY --chown=sandbox:sandbox agent-config/ /sandbox/.omp
