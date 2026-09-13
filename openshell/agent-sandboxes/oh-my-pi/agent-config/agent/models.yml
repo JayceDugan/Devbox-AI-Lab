@@ -1,0 +1,11 @@
+providers:
+  inference:
+    baseUrl: https://inference.local/v1
+    api: openai-completions
+    auth: none
+    models:
+      - id: qwen3.8-27b
+        compat:
+          thinkingFormat: openai
+          reasoningEffortMap:
+            high: xhigh

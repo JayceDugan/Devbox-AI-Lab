@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": false,
+        "amount": 5
+    },
+    "auditLog": "/sandbox/.omp/logs/.omp.37-audit.json",
+    "files": [
+        {
+            "date": 1789273909483,
+            "name": "/sandbox/.omp/logs/omp.2026-09-13.37.log",
+            "hash": "d6037a9fbc635b7dba22f53252e4e81a79b4c8b41290311e3bb62dd8c0bd1c39"
+        }
+    ],
+    "hashType": "sha256"
+}

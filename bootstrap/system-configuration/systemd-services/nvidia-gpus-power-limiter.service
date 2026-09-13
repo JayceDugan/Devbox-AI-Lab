@@ -1,0 +1,17 @@
+[Unit]
+Description=Set NVIDIA GPU Minimum Power Limits
+After=nvidia-persistenced.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nvidia-smi -pm 1
+
+# Set GPU 0 (RTX 5090) to 400W floor
+ExecStart=/usr/bin/nvidia-smi -i 0 -pl 400
+
+# Set GPU 1 (RTX 5080) to 250W floor
+ExecStart=/usr/bin/nvidia-smi -i 1 -pl 250
+
+[Install]
+WantedBy=multi-user.target
+
