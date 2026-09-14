@@ -31,6 +31,10 @@ USER sandbox
 RUN echo 'export PATH="$PATH:/sandbox/.local/bin"' >> /sandbox/.bashrc
 RUN echo 'alias omp="omp --allow-home"' >> /sandbox/.bashrc
 
+# Configure git identity for commits made inside the sandbox
+RUN git config --global user.name "Jayce's Sandbox Agent" \
+ && git config --global user.email "agent@ai-lab.com"
+
 ENV PATH="/sandbox/.local/bin:${PATH}"
 
 RUN curl -fsSL https://omp.sh/install | sh

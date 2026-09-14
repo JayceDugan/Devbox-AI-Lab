@@ -56,7 +56,7 @@ network_policies:
       - { path: /usr/bin/git }
 
   # ── GitHub: REST API ─────────────────────────────────────────
-github_api:
+  github_api:
     name: github-api
     endpoints:
       - host: api.github.com
@@ -78,9 +78,9 @@ github_api:
           # GitHub GraphQL API (used by gh CLI)
           - allow:
               operation_type: query
-#          - allow:
-#              operation_type: mutation
-#              fields: [createIssue, updateIssue, addComment]
+          - allow:
+              operation_type: mutation
+              fields: [createPullRequest, updatePullRequest]
         deny_rules:
           - operation_type: mutation
             fields: [deleteRepository, deleteRef, updateBranchProtectionRule]
