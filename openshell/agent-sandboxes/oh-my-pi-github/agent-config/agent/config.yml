@@ -1,0 +1,10 @@
+modelRoles:
+  default: inference/qwen3.8-27b
+  image: inference/qwen3.8-27b
+defaultThinkingLevel: high
+symbolPreset: nerd
+composer:
+  shape: box
+theme:
+  dark: titanium
+setupVersion: 2
