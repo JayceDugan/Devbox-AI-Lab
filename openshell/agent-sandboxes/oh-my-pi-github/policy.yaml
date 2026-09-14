@@ -35,43 +35,60 @@ process:
 # SHA256 integrity is enforced in Rust via trust-on-first-use, not here.
 
 network_policies:
-  github_ssh_over_https:
-    name: github-ssh-over-https
+  github_git:
+    name: github-git
     endpoints:
       - host: github.com
         port: 443
         protocol: rest
-        tls: terminate
         enforcement: enforce
         rules:
-          # Git Smart HTTP read-only: allow clone, fetch, pull
-          # Discovery (query string is included in path matching)
           - allow:
               method: GET
-              path: "/**/info/refs*"
-          # Data transfer for reads (all repos)
+              path: "/JayceDugan/sandbox-test-repository.git/info/refs*"
           - allow:
               method: POST
-              path: "/**/git-upload-pack"
-          # Data transfer for writes
-          # - allow:
-          #    method: POST
-          #    path: "/**/git-receive-pack"
+              path: "/JayceDugan/sandbox-test-repository.git/git-upload-pack"
+          - allow:
+              method: POST
+              path: "/JayceDugan/sandbox-test-repository.git/git-receive-pack"
     binaries:
       - { path: /usr/bin/git }
 
-  # --- GitHub REST API (read-only) ---
-  github_rest_api:
-    name: github-rest-api
+  # ── GitHub: REST API ─────────────────────────────────────────
+github_api:
+    name: github-api
     endpoints:
       - host: api.github.com
         port: 443
+        path: "/repos/JayceDugan/sandbox-test-repository/**"
         protocol: rest
-        tls: terminate
         enforcement: enforce
-        access: read-only
+        rules:
+          # Full read-write access to the repository
+          - allow:
+              method: "*"
+              path: "/repos/JayceDugan/sandbox-test-repository/**"
+      - host: api.github.com
+        port: 443
+        path: "/graphql"
+        protocol: graphql
+        enforcement: enforce
+        rules:
+          # GitHub GraphQL API (used by gh CLI)
+          - allow:
+              operation_type: query
+#          - allow:
+#              operation_type: mutation
+#              fields: [createIssue, updateIssue, addComment]
+        deny_rules:
+          - operation_type: mutation
+            fields: [deleteRepository, deleteRef, updateBranchProtectionRule]
     binaries:
+      - { path: /usr/local/bin/claude }
+      - { path: /usr/local/bin/opencode }
       - { path: /usr/bin/gh }
+      - { path: /usr/bin/curl }
 
   pypi:
     name: pypi
