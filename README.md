@@ -5,7 +5,7 @@
 > It exists so I can point at something on my wall and say *that box runs my world*.
 
 <p align="center">
-  <img src="docs/assets/rig.jpg" alt="The devbox — Threadripper PRO workstation with an RTX 5090 and an RTX 5080" width="720">
+  <img src="containers/legacy/docs/assets/rig.jpg" alt="The devbox — Threadripper PRO workstation with an RTX 5090 and an RTX 5080" width="720">
 </p>
 
 <p align="center"><em>The rig. Two Blackwell cards, one desk, no cloud in sight.</em></p>
@@ -134,24 +134,26 @@ Hence `services/asr/model-image/Dockerfile`.
 ## 📦 Repo Map
 
 ```
-ai-lab/
-├── docker-compose.yml        # single stack — WebUI, Langfuse (via submodule), embedding, ASR (only unsloth + agent-browser are profile-gated)
-├── Makefile                  # the only commands I remember
-├── .env / .env.example       # root + ASR keys; docker compose reads .env automatically
-├── workspaces/
-│   └── unsloth/              # mounted into the unsloth container at /workspace/host
-├── services/
-│   ├── asr/                  # speech stack (STT + TTS) → RTX 5080 (always on, own net)
-│   │   ├── api/              # Go facade: /v1/transcribe, /v1/speak, /healthz + 23 test funcs
-│   │   ├── model-image/      # vLLM overlay with the [audio] extra
-│   │   ├── kokoro-image/     # Kokoro-82M TTS behind an OpenAI-style /v1/audio/speech
-│   │   ├── evals/            # promptfoo config for the cleanup prompt
-│   │   └── prompts/          # cleanup-system.txt (mounted ro into asr-api)
-│   ├── embeddings/           # ONNX embedding service (always on)
-│   └── langfuse/             # submodule: LLM observability, pinned to a release tag
-├── tools/
-│   └── gpu-burn/             # submodule: because new rigs must be burned in
-└── docs/                     # camoufox-plan.md (agent browsing design), assets/rig.jpg
+Devbox-AI-Lab/
+├── bootstrap/                  # host bootstrap: dotfiles, packages, podman, systemd
+│   ├── dotfiles/               # bashrc, nvim (lazy.nvim + AstroNvim), tmux
+│   ├── install.sh
+│   ├── packages/               # installed-package list + update.sh
+│   ├── services/podman/        # podman setup
+│   └── system-configuration/   # systemd units incl. nvidia GPU power limiter
+├── containers/
+│   ├── legacy/                 # the original lab stack the rest of this README describes
+│   │   ├── docker-compose.yml  # single stack — WebUI, Langfuse, embedding, ASR
+│   │   ├── Makefile            # the only commands I remember
+│   │   ├── services/           # asr (Go facade + vLLM + Kokoro), embeddings
+│   │   ├── workspaces/         # unsloth, trt-llm
+│   │   └── docs/               # assets/rig.jpg
+│   └── ninfer/                 # ninfer image + benchmark/serve scripts
+├── openshell/
+│   ├── agent-sandboxes/        # pi, oh-my-pi, oh-my-pi-github agent sandboxes
+│   └── inference-providers/
+│       └── ninfer/             # provider install/set scripts
+└── README.md
 ```
 
 ## 🎛️ Commands
