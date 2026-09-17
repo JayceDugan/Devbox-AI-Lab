@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "debug-inference": {
+      "source": "NVIDIA/OpenShell",
+      "sourceType": "github",
+      "skillPath": "skills/debug-inference/SKILL.md",
+      "computedHash": "49d5a61702660749a4c1ddcee557c75874dd22e625d8e837131af0076ab196a8"
+    },
+    "debug-openshell-cluster": {
+      "source": "NVIDIA/OpenShell",
+      "sourceType": "github",
+      "skillPath": "skills/debug-openshell-cluster/SKILL.md",
+      "computedHash": "cb8a08a99359da02fb54cf657bc257a05b65661d628ea4929833f46cb206652b"
+    },
+    "generate-sandbox-policy": {
+      "source": "NVIDIA/OpenShell",
+      "sourceType": "github",
+      "skillPath": "skills/generate-sandbox-policy/SKILL.md",
+      "computedHash": "d555c240dab3078c27904801d44d3eed81c4c61fc903b45157cbbc6f384c65b0"
+    },
+    "openshell-cli": {
+      "source": "NVIDIA/OpenShell",
+      "sourceType": "github",
+      "skillPath": "skills/openshell-cli/SKILL.md",
+      "computedHash": "6438eefefdc8493e41a03369e0b3a34b9bd34c0018d35a58b4b3ddab5e7485d8"
+    }
+  }
+}

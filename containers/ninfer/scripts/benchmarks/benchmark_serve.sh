@@ -9,5 +9,5 @@ podman run --rm -it \
   --artifact qwen3_8_27b=/qwen3_8_27b_nvfp4.ninfer \
     --mode mtp3 --sampling stochastic --suite decode-saturation \
     --concurrency 8 \
-    --decode-tokens 8192 --max-context 16384 --kv-capacity auto \
+    --decode-tokens 8192 --max-context 180000 --kv-capacity 180000 \
     --output profiles/bench/concurrent_decode_qwen3_8_27b_nvfp4_mtp3_20260817

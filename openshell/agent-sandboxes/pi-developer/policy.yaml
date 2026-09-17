@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-# pi — sandbox network policy (base agent; shared with pi-developer)
+# pi-developer — feature-developer agent sandbox policy
 #
 # This is the agent's network contract (enforcement). The GitHub credential
 # boundary is owned by the `github-feature` provider profile

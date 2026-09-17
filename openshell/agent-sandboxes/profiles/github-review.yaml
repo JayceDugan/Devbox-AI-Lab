@@ -1,0 +1,107 @@
+# GitHub — PR REVIEW role profile
+#
+# Credential boundary + network contract for review agents: they read
+# repositories and diffs, and leave review feedback (PR/issue comments and
+# formal reviews). They do NOT push code and do NOT create/close PRs.
+#
+#   Import:       openshell provider profile import --file profiles/github-review.yaml
+#   Create prov:  GITHUB_TOKEN=ghp_... openshell provider create --name github-review --type github-review --credential GITHUB_TOKEN
+#
+# If reviewers must push suggested-fix commits to the PR branch, add a
+# POST /**/git-receive-pack rule to the github.com endpoint (and mirror it
+# in the agent's policy.yaml).
+#
+# Token scopes (fine-grained PAT): Contents Read (clone), Pull requests
+# Read (view/diff) + Write (formal reviews), Issues Read/Write (comments).
+# The token value lives only on the provider — see README.md "Using a
+# different GitHub token".
+#
+# Note: `gh pr review` issues the GraphQL mutations addPullRequestReview /
+# submitPullRequestReview / updatePullRequestReview (not the REST
+# /pulls/*/reviews endpoint), so the GraphQL rules below are load-bearing.
+# GitHub also allows only ONE pending review per user per PR.
+
+id: github-review
+display_name: GitHub (PR review)
+resource_version: 4
+description: Read-only GitHub access plus review feedback (comments, reviews) on assigned repositories
+category: source_control
+credentials:
+  - name: api_token
+    description: GitHub token
+    env_vars:
+      - GITHUB_TOKEN
+      - GH_TOKEN
+    required: true
+    auth_style: bearer
+    header_name: authorization
+endpoints:
+  # Git Smart HTTP: read/fetch only (no push)
+  - host: github.com
+    port: 443
+    protocol: rest
+    enforcement: enforce
+    rules:
+      - allow:
+          method: GET
+          path: '**'
+      - allow:
+          method: HEAD
+          path: '**'
+      - allow:
+          method: OPTIONS
+          path: '**'
+      - allow:
+          method: POST
+          path: /**/git-upload-pack
+  # REST API: broad read
+  - host: api.github.com
+    port: 443
+    protocol: rest
+    access: read-only
+    enforcement: enforce
+  # REST API: review feedback writes, repo-scoped
+  - host: api.github.com
+    port: 443
+    protocol: rest
+    enforcement: enforce
+    path: /repos/JayceDugan/**
+    rules:
+      # PR and issue comments
+      - allow:
+          method: POST
+          path: /repos/JayceDugan/*/issues/*/comments
+      - allow:
+          method: PATCH
+          path: /repos/JayceDugan/*/issues/comments/*
+      # Formal reviews (create + submit; includes approve / request-changes)
+      - allow:
+          method: POST
+          path: /repos/JayceDugan/*/pulls/*/reviews
+      - allow:
+          method: POST
+          path: /repos/JayceDugan/*/pulls/*/reviews/*/events
+  # GraphQL: reads + review mutations (gh pr review maps to GraphQL,
+  # not REST). Dismiss/delete are intentionally excluded.
+  - host: api.github.com
+    port: 443
+    protocol: graphql
+    enforcement: enforce
+    path: /graphql
+    rules:
+      - allow:
+          operation_type: query
+      - allow:
+          operation_type: mutation
+          fields:
+            - addPullRequestReview
+            - submitPullRequestReview
+            - updatePullRequestReview
+binaries:
+  - /usr/bin/gh
+  - /usr/local/bin/gh
+  - /usr/bin/git
+  - /usr/local/bin/git
+discovery:
+  credentials:
+    - api_token

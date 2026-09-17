@@ -5,10 +5,10 @@ podman run --rm -it \
   -v /srv/models/hub/models--neroued--Qwen3.8-27B-nvfp4-NInfer:/models:ro \
   -p 8088:8088 \
   localhost/ai-lab/ninfer-server:latest \
-  ./build/apps/ninfer-serve /models/snapshots/11dbbbbbc33db198afe2f02c9232c771ff7031be/qwen3_8_27b_nvfp4.ninfer \
+  ./build/apps/ninfer-serve /models/snapshots/f0b43ad436b9fa8142c6ed6647c470a6fe409484/qwen3_8_27b_nvfp4.ninfer \
   --model-id qwen3.8-27b \
-  --max-context 240000 \
-  --kv-capacity 240000 \
+  --max-context 180000 \
+  --kv-capacity 180000 \
   --max-concurrency 4 \
   --kv-dtype fp8 \
   --device-state-slots 4 \

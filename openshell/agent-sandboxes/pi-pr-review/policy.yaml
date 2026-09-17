@@ -1,17 +1,16 @@
 # SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-# pi — sandbox network policy (base agent; shared with pi-developer)
+# pi-pr-review — PR review agent sandbox policy
 #
-# This is the agent's network contract (enforcement). The GitHub credential
-# boundary is owned by the `github-feature` provider profile
-# (agent-sandboxes/profiles/github-feature.yaml); its endpoints are composed
-# into the effective policy on attachment and are the ONLY endpoints where
-# the GITHUB_TOKEN placeholder resolves. Keep the two in sync.
+# Read-only for code: git clone/fetch only (no git-receive-pack), broad REST
+# reads, and repo-scoped review writes (comments + formal reviews). The
+# credential boundary is owned by the `github-review` provider profile
+# (agent-sandboxes/profiles/github-review.yaml); keep the two in sync.
 #
-# Composition semantics: allow rules from overlapping endpoints are unioned;
-# deny rules always win; a broad read-only endpoint does not block narrower
-# explicit allows on more specific paths.
+# A different GITHUB_TOKEN for this role does NOT require a policy change —
+# tokens live on providers, not in this file. See agent-sandboxes/README.md,
+# "Using a different GitHub token".
 
 version: 1
 
@@ -42,9 +41,9 @@ process:
 # --- Network policies (queried per-CONNECT request) ---
 
 network_policies:
-  # Git Smart HTTP over HTTPS: clone/fetch + push (feature delivery needs writes)
-  github_git_https:
-    name: github-git-https
+  # Git Smart HTTP over HTTPS: clone/fetch only — NO git-receive-pack (no push)
+  github_git_read:
+    name: github-git-read
     endpoints:
       - host: github.com
         port: 443
@@ -56,18 +55,14 @@ network_policies:
           - allow:
               method: GET
               path: "/**/info/refs*"
-          # Reads: clone / fetch / pull
+          # Reads: clone / fetch
           - allow:
               method: POST
               path: "/**/git-upload-pack"
-          # Writes: push
-          - allow:
-              method: POST
-              path: "/**/git-receive-pack"
     binaries:
       - { path: /usr/bin/git }
 
-  # GitHub REST API — broad read for gh/curl (repo metadata, PRs, issues, branches)
+  # GitHub REST API — broad read for gh/curl
   github_rest_api:
     name: github-rest-api
     endpoints:
@@ -81,9 +76,9 @@ network_policies:
       - { path: /usr/bin/gh }
       - { path: /usr/bin/curl }
 
-  # GitHub writes — repo-scoped PR lifecycle only (create/edit/close + comments)
-  github_pr_writes:
-    name: github-pr-writes
+  # Review writes — repo-scoped comments and formal reviews only
+  github_review_writes:
+    name: github-review-writes
     endpoints:
       - host: api.github.com
         port: 443
@@ -92,14 +87,6 @@ network_policies:
         enforcement: enforce
         path: /repos/JayceDugan/**
         rules:
-          # Create PR
-          - allow:
-              method: POST
-              path: "/repos/JayceDugan/*/pulls"
-          # Close / reopen / edit PR
-          - allow:
-              method: PATCH
-              path: "/repos/JayceDugan/*/pulls/*"
           # Add / edit comments (PRs and issues)
           - allow:
               method: POST
@@ -107,6 +94,13 @@ network_policies:
           - allow:
               method: PATCH
               path: "/repos/JayceDugan/*/issues/comments/*"
+          # Formal reviews (create + submit; approve / request-changes / comment)
+          - allow:
+              method: POST
+              path: "/repos/JayceDugan/*/pulls/*/reviews"
+          - allow:
+              method: POST
+              path: "/repos/JayceDugan/*/pulls/*/reviews/*/events"
       - host: api.github.com
         port: 443
         protocol: graphql
@@ -116,29 +110,20 @@ network_policies:
         rules:
           - allow:
               operation_type: query
+          # gh pr review maps to GraphQL mutations, not REST
           - allow:
               operation_type: mutation
               fields:
-                - createPullRequest
-                - updatePullRequest
-                - closePullRequest
-                - reopenPullRequest
-                - addComment
-                - updateComment
-                - deleteComment
-        deny_rules:
-          - operation_type: mutation
-            fields:
-              - deleteRepository
-              - deleteRef
-              - updateBranchProtectionRule
+                - addPullRequestReview
+                - submitPullRequestReview
+                - updatePullRequestReview
     binaries:
       - { path: /usr/bin/gh }
       - { path: /usr/bin/curl }
 
   # Python tooling (uv / venv / pip)
-  # github.com + api.github.com are credentialed hosts (github provider), so
-  # uv's access to them must be L7-inspected (not L4-only).
+  # github.com + api.github.com are credentialed hosts (github-review
+  # provider), so uv's access to them must be L7-inspected (not L4-only).
   pypi:
     name: pypi
     endpoints:

@@ -3,12 +3,16 @@
 # SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-# Pi Coding Agent sandbox image for OpenShell
+# Pi Coding Agent — PR REVIEW sandbox image for OpenShell
 #
-# Builds on the community base sandbox and adds pi.
+# Builds on the community base sandbox and adds pi, file-search tools, and
+# git-over-https auth via gh's built-in credential helper. The read-only
+# network boundary comes from the github-review provider profile + the
+# policy.yaml baked below.
 #
-# Build:  docker build -t openshell-pi --build-arg BASE_IMAGE=openshell-base .
-# Run:    openshell sandbox create --from pi
+# Build:  ./build.sh   (podman build -t ai-lab/openshell-pi-pr-review-sandbox .)
+# Run:    ./run.sh [name] [provider]
+
 ARG BASE_IMAGE=ghcr.io/nvidia/openshell-community/sandboxes/base:latest
 FROM ${BASE_IMAGE}
 
@@ -17,11 +21,9 @@ USER root
 # Install pi
 RUN npm install -g @earendil-works/pi-coding-agent
 
-# File-search binaries used by pi's tools. Installed at build time because the
-# sandbox has no egress to the hosts pi's on-demand downloader would use
-# (policy.yaml grants no registry/general downloads). pi's tool manager finds
-# them via system PATH: "rg" (package ripgrep) and "fdfind" (package fd-find
-# — Ubuntu's name for fd; pi checks both "fd" and "fdfind").
+# File-search binaries used by pi's tools (ripgrep + fd). Installed at build
+# time because the sandbox has no egress to the hosts pi's on-demand
+# downloader would use (policy.yaml grants no registry/general downloads).
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ripgrep fd-find \
     && rm -rf /var/lib/apt/lists/*
@@ -32,10 +34,11 @@ RUN apt-get update \
 # — and the supervisor rewrites the Authorization header with the real token
 # in transit for profile-declared endpoints. No secret in the image, no
 # custom scripts; this is exactly the config `gh auth setup-git` writes.
-# Copy sandbox policy
+# Copy sandbox network policy (baked in as the create-time default)
 COPY policy.yaml /etc/openshell/policy.yaml
 
-# Configure pi to use the OpenShell local inference endpoint (https://inference.local)
+# Configure pi: AGENTS.md persona (PR review) + inference models.json.
+# Loaded from ~/.pi/agent/ (global) by pi at startup.
 COPY --chown=sandbox:sandbox agent-config/ /sandbox/.pi/agent/
 
 USER sandbox

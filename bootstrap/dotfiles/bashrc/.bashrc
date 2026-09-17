@@ -23,4 +23,7 @@ export HF_HOME="/srv/models"
 # Set OPENSHELL_DRIVERS for OpenShell
 export OPENSHELL_DRIVERS=podman
 
-alias pi='openshell sandbox create --from localhost/ai-lab/openshell-pi-sandbox'
+#alias pi='openshell sandbox create --from localhost/ai-lab/openshell-pi-sandbox'
+
+# Pi
+export PATH="/home/jayce/.local/share/pi-node/node-v22.23.2-linux-x64/bin:$PATH"

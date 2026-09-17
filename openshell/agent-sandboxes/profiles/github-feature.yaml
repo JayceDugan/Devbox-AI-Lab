@@ -1,0 +1,113 @@
+# GitHub — FEATURE DELIVERY role profile
+#
+# Credential boundary + network contract for agents that clone, push, and
+# manage the pull-request lifecycle (create / edit / close / comment) in
+# the assigned repositories.
+#
+#   Import/upsert:  openshell provider profile import --file profiles/github-feature.yaml
+#   Lint:           openshell provider profile lint --file profiles/github-feature.yaml
+#   Create provider (once, token in env):
+#     GITHUB_TOKEN=ghp_... openshell provider create --name github --type github-feature --credential GITHUB_TOKEN
+#
+# Keep agent-sandboxes/<agent>/policy.yaml in sync with these endpoints:
+# the profile declares where the token RESOLVES; the sandbox policy is the
+# full ENFORCEMENT contract.
+#
+# Concurrency: `profile update` requires the current resource_version. After
+# each successful update, re-sync it:
+#   openshell provider profile export github-feature --output yaml | grep resource_version
+
+id: github-feature
+resource_version: 4
+display_name: GitHub (feature delivery)
+description: GitHub git operations (clone/push) and repo-scoped pull request lifecycle (create, update, close, comment)
+category: source_control
+credentials:
+  - name: api_token
+    description: GitHub token
+    env_vars:
+      - GITHUB_TOKEN
+      - GH_TOKEN
+    required: true
+    auth_style: bearer
+    header_name: authorization
+endpoints:
+  # Git Smart HTTP: reads for everyone; push for feature delivery
+  - host: github.com
+    port: 443
+    protocol: rest
+    enforcement: enforce
+    rules:
+      - allow:
+          method: GET
+          path: '**'
+      - allow:
+          method: HEAD
+          path: '**'
+      - allow:
+          method: OPTIONS
+          path: '**'
+      - allow:
+          method: POST
+          path: /**/git-upload-pack
+      - allow:
+          method: POST
+          path: /**/git-receive-pack
+  # REST API: broad read
+  - host: api.github.com
+    port: 443
+    protocol: rest
+    access: read-only
+    enforcement: enforce
+  # REST API: repo-scoped PR lifecycle writes
+  - host: api.github.com
+    port: 443
+    protocol: rest
+    enforcement: enforce
+    path: /repos/JayceDugan/**
+    rules:
+      - allow:
+          method: POST
+          path: /repos/JayceDugan/*/pulls
+      - allow:
+          method: PATCH
+          path: /repos/JayceDugan/*/pulls/*
+      - allow:
+          method: POST
+          path: /repos/JayceDugan/*/issues/*/comments
+      - allow:
+          method: PATCH
+          path: /repos/JayceDugan/*/issues/comments/*
+  # GraphQL: queries + PR lifecycle mutations only
+  - host: api.github.com
+    port: 443
+    protocol: graphql
+    enforcement: enforce
+    path: /graphql
+    rules:
+      - allow:
+          operation_type: query
+      - allow:
+          operation_type: mutation
+          fields:
+            - createPullRequest
+            - updatePullRequest
+            - closePullRequest
+            - reopenPullRequest
+            - addComment
+            - updateComment
+            - deleteComment
+    deny_rules:
+      - operation_type: mutation
+        fields:
+          - deleteRepository
+          - deleteRef
+          - updateBranchProtectionRule
+binaries:
+  - /usr/bin/gh
+  - /usr/local/bin/gh
+  - /usr/bin/git
+  - /usr/local/bin/git
+discovery:
+  credentials:
+    - api_token

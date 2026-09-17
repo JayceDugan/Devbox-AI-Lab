@@ -1,0 +1,3 @@
+[submodule "containers/ninfer/ninfer"]
+	path = containers/ninfer/ninfer
+	url = git@github.com:Neroued/ninfer.git
