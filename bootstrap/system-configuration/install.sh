@@ -1,70 +1,87 @@
 #!/bin/bash
+#
+# Installs systemd units from ./systemd-services/ into /usr/local/lib/systemd/system.
+#
+# Why copy instead of symlink:
+#   systemd watches its unit *search directories* with inotify — it does NOT watch
+#   the targets of symlinks. A symlink into this git working tree means that when
+#   git replaces or removes the target (pull, checkout, clean, re-clone, an agent
+#   re-cloning the repo), no inotify event ever fires in any watched directory.
+#   If the target is missing for even a moment while PID 1 is loading units (at
+#   boot, or mid git-operation), systemd latches "not-found" and the unit silently
+#   stops working until someone runs `systemctl daemon-reload`.
+#
+#   A real file in /usr/local/lib/systemd/system is stable: git never touches it,
+#   and systemd watches the directory directly.
+#
+# Idempotent: safe to re-run at any time. It removes legacy /etc symlinks from the
+# old approach, copies only when content changed, daemon-reloads, enables, and
+# (re)applies every unit.
 
-#################
-#### SYMLINKS
-#################
-symlink_if_not_exists() {
-    local symlink_source_path="$1"
-    local symlink_destination_path="$2"
+set -euo pipefail
 
-    # Check if a file or symlink already exists at the destination
-    if [ ! -f "$symlink_destination_path" ] && [ ! -L "$symlink_destination_path" ]; then
-        echo "Symlinking $symlink_source_path -> $symlink_destination_path"
-        sudo ln -s "$symlink_source_path" "$symlink_destination_path"
-    else
-        echo "Symlink or file already exists at $symlink_destination_path, ignoring."
-    fi
-}
+INSTALL_DIR="/usr/local/lib/systemd/system"
+LEGACY_ETC_DIR="/etc/systemd/system"
 
 manage_systemd_services() {
-    # Dynamically find the absolute path of the directory containing THIS install.sh script
-    local script_dir="$(dirname "$(readlink -f "$0")")"
-    local source_dir="$script_dir/systemd-services"
-    local dest_dir="/etc/systemd/system"
+    local script_dir source_dir
+    script_dir="$(dirname "$(readlink -f "$0")")"
+    source_dir="$script_dir/systemd-services"
 
-    # Verify the source directory actually exists
     if [ ! -d "$source_dir" ]; then
-        echo "Error: Source directory $source_dir does not exist."
+        echo "Error: Source directory $source_dir does not exist." >&2
         return 1
     fi
 
-    # Create an array to track successfully linked or existing services
-    local services_to_manage=()
+    sudo mkdir -p "$INSTALL_DIR"
 
-    # Loop through all .service files in your folder
-    for service_file in "$source_dir"/*.service; do
-        # Ensure it's a real file (safely skips if no .service files match)
-        [ -e "$service_file" ] || continue
-        
-        local filename=$(basename "$service_file")
-        symlink_if_not_exists "$service_file" "$dest_dir/$filename"
-        
-        # Track this service filename for the enable/start steps
-        services_to_manage+=("$filename")
+    local units=()
+    local unit_file name dest legacy
+    for unit_file in "$source_dir"/*.service; do
+        # Safely skip if no .service files match the glob
+        [ -e "$unit_file" ] || continue
+
+        name="$(basename "$unit_file")"
+        dest="$INSTALL_DIR/$name"
+        legacy="$LEGACY_ETC_DIR/$name"
+
+        # Drop legacy symlinks from the old symlink-based approach.
+        # /etc shadows /usr/local/lib, so leaving one in place would
+        # reintroduce the git-fragility bug.
+        if [ -L "$legacy" ]; then
+            echo "Removing legacy symlink: $legacy"
+            sudo rm -f "$legacy"
+        fi
+
+        if [ -f "$dest" ] && cmp -s "$unit_file" "$dest"; then
+            echo "$name: already installed, up to date."
+        else
+            echo "Installing $name -> $dest"
+            sudo install -m 644 -o root -g root "$unit_file" "$dest"
+        fi
+
+        units+=("$name")
     done
 
-    # If no services were found, exit early
-    if [ ${#services_to_manage[@]} -eq 0 ]; then
-        echo "No .service files found to manage."
-        return 0
+    if [ ${#units[@]} -eq 0 ]; then
+        echo "No .service files found to manage." >&2
+        return 1
     fi
-    
-    # Reload systemd so it registers the new symlinks
+
+    # Rebuild systemd's unit file cache and register the install dir's watch
     echo "Reloading systemd daemon..."
     sudo systemctl daemon-reload
 
-    # Loop back through our tracked services to enable and start them
-    for service in "${services_to_manage[@]}"; do
-        echo "Enabling $service..."
-        sudo systemctl enable "$service"
-        
-        echo "Starting $service..."
-        sudo systemctl start "$service"
+    for name in "${units[@]}"; do
+        echo "Enabling $name..."
+        sudo systemctl enable "$name"
+
+        # Re-apply immediately (oneshot units without RemainAfterExit re-run on start)
+        echo "Applying $name..."
+        sudo systemctl start "$name"
     done
 
-    echo "All systemd tasks completed successfully!"
+    echo "Done. Verify with: systemctl status ${units[*]}"
 }
 
-# Execute the service management function
 manage_systemd_services
-
