@@ -1,3 +1,3 @@
 #!/bin/bash
 
-podman build -t ai-lab/ninfer-server:latest . --no-cache
+podman build -t ai-lab/ninfer-server:latest .

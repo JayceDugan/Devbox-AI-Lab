@@ -1,0 +1,22 @@
+[Unit]
+Description=Unsloth AI Container
+After=network-online.target
+
+[Container]
+Image=docker.io/unsloth/unsloth
+ContainerName=unsloth
+PodmanArgs=--ipc=host
+PodmanArgs=--device=nvidia.com/gpu=all
+SecurityLabelDisable=true
+PublishPort=8000:8000
+PublishPort=8888:8888
+Volume=%h/unsloth-workspace:/workspace/host:Z
+Volume=/srv/models:/workspace/.cache/huggingface:Z
+Volume=unsloth-studio:/opt/unsloth-studio
+
+[Service]
+Restart=always
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target
