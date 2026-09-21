@@ -1,0 +1,11 @@
+hf_models:
+    base_path: /models
+    checkpoints: checkpoints
+    loras: loras
+    vae: vae
+    text_encoders: text_encoders
+    clip: clip
+    controlnet: controlnet
+    upscale_models: upscale_models
+    embeddings: embeddings
+    diffusion_models: diffusion_models
