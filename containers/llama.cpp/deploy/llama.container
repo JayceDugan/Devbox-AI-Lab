@@ -1,0 +1,5 @@
+[Unit]
+Description=Llama.cpp Container
+After=network-online.target
+
+ghcr.io/ggml-org/llama.cpp:full

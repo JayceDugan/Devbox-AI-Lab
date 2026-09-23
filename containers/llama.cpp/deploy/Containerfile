@@ -1,0 +1,4 @@
+# Use the official lightweight llama.cpp image from ggml-org (has llama-quantize, llama-cli, etc.)
+FROM ghcr.io/ggml-org/llama.cpp:full
+
+ENTRYPOINT ["/bin/bash"]
