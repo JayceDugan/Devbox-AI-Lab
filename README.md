@@ -5,7 +5,7 @@
 > It exists so I can point at something on my wall and say *that box runs my world*.
 
 <p align="center">
-  <img src="docs/assets/rig.jpg" alt="The devbox — Threadripper PRO workstation with an RTX 5090 and an RTX 5080" width="720">
+  <img src="rig.jpg" alt="The devbox — Threadripper PRO workstation with an RTX 5090 and an RTX 5080" width="720">
 </p>
 
 <p align="center"><em>The rig. Two Blackwell cards, one desk, no cloud in sight.</em></p>
@@ -19,7 +19,7 @@ local, everything is mine, and no token leaves the building unless I ask it to.
 ## ⚡ The Machine
 
 | | |
-|---|---|
+|---|---i
 | **Role** | Home AI lab / inference server / "war rig" |
 | **CPU** | AMD Ryzen Threadripper PRO 7965WX — 24 cores / 48 threads, Zen 4, boost to 5.36 GHz |
 | **Motherboard** | ASUS Pro WS WRX90E-SAGE SE (UEFI, 07/2025 firmware) |
@@ -151,7 +151,7 @@ ai-lab/
 │   └── langfuse/             # submodule: LLM observability, pinned to a release tag
 ├── tools/
 │   └── gpu-burn/             # submodule: because new rigs must be burned in
-└── docs/                     # camoufox-plan.md (agent browsing design), assets/rig.jpg
+└── docs/                     # camoufox-plan.md (agent browsing design), rig.jpg
 ```
 
 ## 🎛️ Commands
