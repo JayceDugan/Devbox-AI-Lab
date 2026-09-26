@@ -25,5 +25,7 @@ export OPENSHELL_DRIVERS=podman
 
 #alias pi='openshell sandbox create --from localhost/ai-lab/openshell-pi-sandbox'
 
+alias sys='systemctl --user'
+
 # Pi
 export PATH="/home/jayce/.local/share/pi-node/node-v22.23.2-linux-x64/bin:$PATH"
