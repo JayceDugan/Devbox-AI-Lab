@@ -1,0 +1,21 @@
+[Unit]
+Description=PostgreSQL Persistent Database Container
+After=network-online.target
+
+[Container]
+Image=docker.io/library/postgres:18.6
+ContainerName=postgres
+PublishPort=5432:5432
+Secret=postgres_username,type=env,target=POSTGRES_USER
+Secret=postgres_password,type=env,target=POSTGRES_PASSWORD
+
+# Persistent Volume
+Volume=pg-data:/var/lib/postgresql:Z
+
+[Service]
+# Restart the container automatically if it crashes
+Restart=always
+
+[Install]
+# Pull this unit into multi-user target via systemd
+WantedBy=default.target

@@ -11,6 +11,7 @@ Volume=%h/beszel/beszel_agent_data:/var/lib/beszel-agent:Z
 Volume=%h/beszel/beszel_socket:/beszel_socket:Z
 Volume=/run/user/1000/podman/podman.sock:/run/user/1000/podman/podman.sock:ro
 Environment=LISTEN=/beszel_socket/beszel.sock
+Environment=DOCKER_HOST=unix:///run/user/1000/podman/podman.sock
 Environment=HUB_URL=http://localhost:8090
 Secret=beszel_token,type=env,target=TOKEN
 Secret=beszel_key,type=env,target=KEY

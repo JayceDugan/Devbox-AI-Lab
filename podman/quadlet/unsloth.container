@@ -3,7 +3,7 @@ Description=Unsloth AI Container
 After=network-online.target
 
 [Container]
-Image=docker.io/unsloth/unsloth
+Image=docker.io/unsloth/unsloth:latest
 ContainerName=unsloth
 PodmanArgs=--ipc=host
 PodmanArgs=--device=nvidia.com/gpu=all
