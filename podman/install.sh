@@ -15,4 +15,7 @@ ln -sf "$PWD/quadlet/beszel-agent.container" \
 ln -sf "$PWD/quadlet/postgres.container" \
     ~/.config/containers/systemd/postgres.container
 
+ln -sf "$PWD/quadlet/vllm.container" \
+    ~/.config/containers/systemd/vllm.container
+
 systemctl --user daemon-reload

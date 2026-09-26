@@ -1,0 +1,24 @@
+[Unit]
+Description=Vllm Inference Engine
+After=network-online.target
+
+[Container]
+Image=docker.io/vllm/vllm-openai:nightly
+ContainerName=vllm
+PublishPort=8001:8000
+Volume=/srv/models/:/root/.cache/huggingface:ro,z
+
+PodmanArgs=--device=nvidia.com/gpu=0
+
+Environment=NVIDIA_VISIBLE_DEVICES=0
+Environment=NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+Exec=--model Qwen/Qwen3-0.6B --enable-auto-tool-choice --tool-call-parser qwen3_xml --reasoning-parser qwen3
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=900
+
+[Install]
+# Pull this unit into multi-user target via systemd
+WantedBy=default.target
