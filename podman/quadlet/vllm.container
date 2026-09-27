@@ -16,7 +16,6 @@ Environment=NVIDIA_DRIVER_CAPABILITIES=compute,utility
 Exec=--model Qwen/Qwen3-0.6B --enable-auto-tool-choice --tool-call-parser qwen3_xml --reasoning-parser qwen3
 
 [Service]
-Restart=on-failure
 TimeoutStartSec=900
 
 [Install]
