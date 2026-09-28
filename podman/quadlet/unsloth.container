@@ -5,9 +5,11 @@ After=network-online.target
 [Container]
 Image=docker.io/unsloth/unsloth:latest
 ContainerName=unsloth
-Network=proxy.network
+PublishPort=8000:8000
+
 PodmanArgs=--ipc=host
 PodmanArgs=--device=nvidia.com/gpu=all
+
 SecurityLabelDisable=true
 Volume=%h/unsloth-workspace:/workspace/host:Z
 Volume=/srv/models:/workspace/.cache/huggingface:Z
