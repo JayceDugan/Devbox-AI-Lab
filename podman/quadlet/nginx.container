@@ -1,0 +1,18 @@
+[Unit]
+Description=Nginx Reverse Proxy
+After=proxy-network.service
+Requires=proxy-network.service
+
+[Container]
+ContainerName=nginx
+Image=docker.io/library/nginx:latest
+Network=proxy.network
+PublishPort=80:80
+Volume=%h/nginx/conf.d:/etc/nginx/conf.d:ro,Z
+
+[Service]
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

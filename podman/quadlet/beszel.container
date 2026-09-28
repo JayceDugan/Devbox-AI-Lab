@@ -5,9 +5,9 @@ After=network-online.target
 [Container]
 Image=docker.io/henrygd/beszel:latest
 ContainerName=beszel
-PublishPort=8090:8090
+Network=proxy.network
 Environment=TZ=Australia/Brisbane
-Environment=APP_URL=http://localhost:8090
+Environment=APP_URL=http://homelab/beszel
 Volume=%h/beszel/beszel_data:/beszel_data:Z
 Volume=%h/beszel/beszel_socket:/beszel_socket:Z
 

@@ -4,14 +4,16 @@ After=network-online.target
 
 [Container]
 Image=docker.io/panonim/dynacat
-ContainerName=beszel
-PublishPort=8090:8090
+ContainerName=dynacat
+Network=proxy.network
 Environment=TZ=Australia/Brisbane
-Environment=APP_URL=http://localhost:8090
-Volume=%h/beszel/beszel_data:/beszel_data:Z
-Volume=%h/beszel/beszel_socket:/beszel_socket:Z
+Environment=APP_URL=http://homelab/dynacat
+Volume=../dynacat/config:/app/config
+Volume=../dynacat/assets:/app/assets
+Volume=/etc/localtime:/etc/localtime:ro
 
 [Service]
+Restart=always
 Restart=unless-stopped
 
 [Install]
