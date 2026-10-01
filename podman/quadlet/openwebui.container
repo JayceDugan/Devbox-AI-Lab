@@ -1,0 +1,21 @@
+[Unit]
+Description=Open WebUI Container
+After=inference-network.service
+
+[Container]
+Image=ghcr.io/open-webui/open-webui:main
+ContainerName=open-webui
+Network=inference
+PublishPort=3000:8080
+Volume=open-webui:/app/backend/data
+Environment=WEBUI_SECRET_KEY=f1c90e49c82a754a23972fa6c2f9040da41899eec631d943218ff94b85903472
+
+Environment=OPENAI_API_BASE_URLS=http://vllm:8000/v1;http://unsloth:8000/v1
+# Environment=OPENAI_API_KEY=sk-unsloth-1bcbb90d104816ab35c5f27666306811
+Environment=ENABLE_OLLAMA_API=false
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

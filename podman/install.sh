@@ -9,6 +9,12 @@ set -uex
 mkdir -p ~/.config/containers/systemd
 
 ######################
+# Netwokrs
+######################
+ln -sf "$PWD/quadlet/inference.network" \
+    ~/.config/containers/systemd/inference.network
+
+######################
 # Containers
 ######################
 ln -sf "$PWD/quadlet/unsloth.container" \
@@ -25,6 +31,9 @@ ln -sf "$PWD/quadlet/postgres.container" \
 
 ln -sf "$PWD/quadlet/vllm.container" \
     ~/.config/containers/systemd/vllm.container
+
+ln -sf "$PWD/quadlet/openwebui.container" \
+    ~/.config/containers/systemd/openwebui.container
 
 ######################
 # Reload

@@ -6,6 +6,8 @@ After=network-online.target
 Image=docker.io/unsloth/unsloth:latest
 ContainerName=unsloth
 PublishPort=8000:8000
+PublishPort=8888:8888
+Network=inference
 
 PodmanArgs=--ipc=host
 PodmanArgs=--device=nvidia.com/gpu=all
