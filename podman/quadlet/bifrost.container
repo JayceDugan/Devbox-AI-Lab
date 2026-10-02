@@ -7,6 +7,7 @@ Image=docker.io/maximhq/bifrost:latest
 Network=inference
 ContainerName=BiFrost
 PublishPort=8080:8080
+Volume=%h/bifrost:/app/data
 
 [Service]
 Restart=always
