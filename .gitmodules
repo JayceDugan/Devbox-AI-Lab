@@ -1,3 +1,6 @@
 [submodule "containers/ninfer/ninfer"]
 	path = containers/ninfer/ninfer
 	url = git@github.com:Neroued/ninfer.git
+[submodule "langfuse"]
+	path = langfuse
+	url = https://github.com/langfuse/langfuse.git

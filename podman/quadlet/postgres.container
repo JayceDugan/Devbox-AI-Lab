@@ -18,4 +18,4 @@ Restart=always
 
 [Install]
 # Pull this unit into multi-user target via systemd
-WantedBy=default.target
+#WantedBy=default.target

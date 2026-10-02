@@ -1,0 +1,15 @@
+[Unit]
+Description=BiFrost Container
+After=network-online.target
+
+[Container]
+Image=docker.io/maximhq/bifrost:latest
+Network=inference
+ContainerName=BiFrost
+PublishPort=8080:8080
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

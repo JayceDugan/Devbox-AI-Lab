@@ -6,7 +6,7 @@ After=inference-network.service
 Image=ghcr.io/open-webui/open-webui:main
 ContainerName=open-webui
 Network=inference
-PublishPort=3000:8080
+PublishPort=4000:8080
 Volume=open-webui:/app/backend/data
 Environment=WEBUI_SECRET_KEY=f1c90e49c82a754a23972fa6c2f9040da41899eec631d943218ff94b85903472
 
@@ -18,4 +18,4 @@ Environment=ENABLE_OLLAMA_API=false
 Restart=always
 
 [Install]
-WantedBy=default.target
+#WantedBy=default.target
