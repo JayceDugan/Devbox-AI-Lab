@@ -3,11 +3,11 @@ Description=Vllm Inference Engine
 After=network-online.target
 
 [Container]
-Image=docker.io/vllm/vllm-openai:cu134-nightly
+Image=docker.io/vllm/vllm-openai:qwen38
 ContainerName=vllm
 Network=inference
 PublishPort=8001:8000
-Volume=/srv/models/:/root/.cache/huggingface:ro,z
+Volume=/srv/models/:/root/.cache/huggingface:Z
 
 PodmanArgs=--device=nvidia.com/gpu=0
 
@@ -15,7 +15,18 @@ Environment=NVIDIA_VISIBLE_DEVICES=0
 Environment=VLLM_USE_RUST_FRONTEND=1
 Environment=NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
-Exec=--model Unsloth/Qwen3.8-27B-NVFP4 --tensor-parallel-size 1 --enable-auto-tool-choice --tool-call-parser qwen3_xml  --reasoning-parser qwen3 --mm-encoder-tp-mode data --gpu-memory-utilization 0.85 --max-model-len 32768
+Exec=--model Unsloth/Qwen3.8-27B-NVFP4 \
+--tensor-parallel-size 1 \
+--enable-auto-tool-choice \
+--tool-call-parser qwen3_xml \
+--reasoning-parser qwen3 \
+--mm-encoder-tp-mode data \
+--kv-cache-dtype fp8 \
+--gpu-memory-utilization 0.97 \
+--max-model-len 180000 \
+--language-model-only \
+--enforce-eager
 
 [Service]
 TimeoutStartSec=900
+
