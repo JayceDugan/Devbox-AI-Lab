@@ -1,11 +1,31 @@
 [Unit]
-Description=Ninfer inference server
+Description=Ninfer Inference Engine
+After=network-online.target
 
 [Container]
-Image=ai-lab/ninfer-server:latest
+Image=localhost/ai-lab/ninfer-server:latest
 ContainerName=ninfer
-PublishPort=8000:8000
-# Mount the exact snapshot directory to /models
-Volume=/srv/models/hub/models--neroued--Qwen3.8-27B-nvfp4-NInfer/snapshots/11dbbbbbc33db198afe2f02c9232c771ff7031be:/models:ro
-# Pipe through RTX 5090
-AddDevice=nvidia.com/gpu=0
+Network=inference
+PublishPort=8088:8088
+Volume=%h/ninfer/models:/app/ninfer/models:Z
+
+PodmanArgs=--device=nvidia.com/gpu=0
+Environment=NVIDIA_VISIBLE_DEVICES=0
+
+Exec=./build/apps/ninfer-serve models/qwen3_8_27b_nvfp4.ninfer \
+  --host 0.0.0.0 \
+  --model-id ninfer/qwen3.8-27B-NVFP4 \
+  --port 8088 \
+  --max-context 130000 \
+  --kv-capacity 130000 \
+  --max-concurrency 2 \
+  --kv-dtype fp8 \
+  --device-state-slots 2 \
+  --host-state-slots 8 \
+  --host-kv-mib 8192 \
+  --spec mtp --draft-tokens 3 \
+  --lm-head-draft \
+  --preserve-thinking
+
+[Service]
+TimeoutStartSec=900

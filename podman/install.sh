@@ -38,6 +38,9 @@ ln -sf "$PWD/quadlet/openwebui.container" \
 ln -sf "$PWD/quadlet/bifrost.container" \
     ~/.config/containers/systemd/bifrost.container
 
+ln -sf "$PWD/quadlet/ninfer.container" \
+    ~/.config/containers/systemd/ninfer.container
+
 ######################
 # Reload
 ######################
