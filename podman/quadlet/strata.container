@@ -1,0 +1,62 @@
+# Strata: how to run, switch models, update, endpoints -> podman/strata/README.md
+[Unit]
+Description=Strata Inference Engine (Qwen3.8-Flash-Next)
+After=network-online.target
+
+[Container]
+Image=localhost/ai-lab/strata:latest
+ContainerName=strata
+Network=inference
+PublishPort=8090:8080
+
+# The HF cache, read-only: Strata cannot touch the model files. Everything it
+# writes (pack, MTP draft layer, per-model config) goes to the strata-data volume.
+Volume=/srv/models:/srv/models:ro
+Volume=strata-data:/data
+
+# RTX 5090 only, by UUID so a change in device order can never hand it the 5080.
+# Inside the container it is the only GPU, so it is GPU 0 there.
+PodmanArgs=--device=nvidia.com/gpu=GPU-cbd73127-475d-a971-3a16-f47d7453f0ac
+Environment=NVIDIA_VISIBLE_DEVICES=GPU-cbd73127-475d-a971-3a16-f47d7453f0ac
+Environment=NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+# Strata mlocks its experts and PLE table (tens of GB). Capped at 200 GiB, which
+# needs the user manager's hard limit raised first or the container fails to start:
+# bootstrap/system-configuration/systemd-dropins/user@.service.d/memlock.conf
+Ulimit=memlock=214748364800:214748364800
+
+# Hard RAM cap for the whole container (IQ3_XXS needs ~50-60 GB, IQ1_M less)
+Memory=200g
+
+# Untrusted project: no capabilities, no privilege escalation
+DropCapability=ALL
+NoNewPrivileges=true
+
+# Model selection, read by the image's docker-entrypoint.sh. The first start for
+# a FAMILY/MODEL pair runs setup (pack + ~6 GB MTP download) and saves its config
+# to /data; later starts go straight to serving. To switch models, change these
+# three and restart. To change CONTEXT/VISION/KV for a model already set up, add
+# Environment=REINSTALL=1 for one start.
+#
+# GGUF_DIR is the HF snapshot folder holding the -00001-of-0000N.gguf shards:
+#   qwen:  hub/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-GGUF/snapshots/<rev>/<MODEL>
+#   coder: hub/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF/snapshots/5348543e0147355ac9cbcb031184a3546350988e/IQ1_M (FAMILY=coder MODEL=IQ1_M)
+# (The unsloth Q8_0 in the cache is not a format Strata can run.)
+Environment=FAMILY=qwen
+Environment=MODEL=IQ3_XXS
+Environment=GGUF_DIR=/srv/models/hub/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-GGUF/snapshots/2c4721899b4382bd07dfb61ae4fbad90c09caf7d/IQ3_XXS
+Environment=CONTEXT=262144
+Environment=VISION=yes
+Environment=GPU=0
+
+# Host names Strata answers to (DNS rebinding check; IPs and localhost always pass):
+# the LAN names for the web chat, and the container name Bifrost uses on the
+# inference network
+Environment=STRATA_ALLOWED_HOSTS=homelab,ai-lab,strata
+
+# The engine releases tens of GB of pinned RAM on SIGTERM
+StopTimeout=60
+
+[Service]
+TimeoutStartSec=1800
+TimeoutStopSec=90

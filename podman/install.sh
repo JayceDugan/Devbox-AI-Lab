@@ -41,6 +41,9 @@ ln -sf "$PWD/quadlet/bifrost.container" \
 ln -sf "$PWD/quadlet/ninfer.container" \
     ~/.config/containers/systemd/ninfer.container
 
+ln -sf "$PWD/quadlet/strata.container" \
+    ~/.config/containers/systemd/strata.container
+
 ######################
 # Reload
 ######################

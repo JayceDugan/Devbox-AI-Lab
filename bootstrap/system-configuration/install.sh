@@ -84,4 +84,30 @@ manage_systemd_services() {
     echo "Done. Verify with: systemctl status ${units[*]}"
 }
 
+# Drop-ins for units systemd already ships (e.g. user@.service), copied for the
+# same reason as the units above. Applied by the next restart of that unit.
+install_systemd_dropins() {
+    local script_dir source_dir dir name dest
+    script_dir="$(dirname "$(readlink -f "$0")")"
+    source_dir="$script_dir/systemd-dropins"
+
+    [ -d "$source_dir" ] || return 0
+
+    for dir in "$source_dir"/*.d; do
+        [ -d "$dir" ] || continue
+        for conf in "$dir"/*.conf; do
+            [ -e "$conf" ] || continue
+            name="$(basename "$dir")/$(basename "$conf")"
+            dest="/etc/systemd/system/$name"
+            if [ -f "$dest" ] && cmp -s "$conf" "$dest"; then
+                echo "$name: already installed, up to date."
+            else
+                echo "Installing $name -> $dest"
+                sudo install -D -m 644 -o root -g root "$conf" "$dest"
+            fi
+        done
+    done
+}
+
+install_systemd_dropins
 manage_systemd_services
