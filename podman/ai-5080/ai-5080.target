@@ -1,0 +1,8 @@
+# The RTX 5080 speech/embedding stack. Started at boot via ai-boot.target (podman/boot),
+# or by hand: systemctl --user start ai-5080.target. See README.md.
+[Unit]
+Description=RTX 5080 stack: ASR, aligner, embeddings, TTS
+# Wants, not Requires: one failing service does not stop the others.
+# Each service is ordered After= the previous one and reports ready only once
+# its model is loaded (Notify=healthy), so they load one at a time.
+Wants=asr.service aligner.service embeddings.service kokoro.service

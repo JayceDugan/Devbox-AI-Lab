@@ -1,0 +1,40 @@
+# ai-5080 stack: how it starts, endpoints, VRAM -> podman/ai-5080/README.md
+[Unit]
+Description=Kokoro-82M text to speech (Kokoro-FastAPI, RTX 5080)
+After=network-online.target embeddings.service
+StartLimitIntervalSec=900
+StartLimitBurst=3
+
+[Container]
+# cu128 build: the default (cu126) image has no sm_120 kernels for the RTX 50xx.
+# The baked-in kokoro-v1_0.pth and config.json are byte-identical to hexgrad/Kokoro-82M
+# in /srv/models, so nothing is mounted; it also ships 72 voices.
+Image=ghcr.io/remsky/kokoro-fastapi-gpu:v0.9.0-cu128
+ContainerName=kokoro
+Network=inference
+PublishPort=8104:8880
+
+# Never fetch the model at startup (the entrypoint would otherwise check)
+Environment=DOWNLOAD_MODEL=false
+Environment=HF_HUB_OFFLINE=1
+Environment=USE_GPU=true
+Environment=DEVICE_TYPE=cuda
+
+# RTX 5080 only, by UUID
+PodmanArgs=--device=nvidia.com/gpu=GPU-e4668f97-25e5-867c-92c5-4de87f529c42
+Environment=NVIDIA_VISIBLE_DEVICES=GPU-e4668f97-25e5-867c-92c5-4de87f529c42
+Environment=NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+DropCapability=ALL
+NoNewPrivileges=true
+
+HealthCmd=python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8880/health')"
+HealthInterval=10s
+HealthStartPeriod=5m
+HealthRetries=3
+Notify=healthy
+
+[Service]
+Restart=on-failure
+RestartSec=60
+TimeoutStartSec=600

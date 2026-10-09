@@ -1,7 +1,9 @@
 # Strata: how to run, switch models, update, endpoints -> podman/strata/README.md
 [Unit]
 Description=Strata Inference Engine (Qwen3.8-Flash-Next)
-After=network-online.target
+# Started by ai-boot.timer 5 min after boot, after the 5080 stack has loaded, so
+# the two GPUs never load models at the same moment (podman/ai-5080/README.md)
+After=network-online.target kokoro.service
 
 [Container]
 Image=localhost/ai-lab/strata:latest
@@ -9,9 +11,10 @@ ContainerName=strata
 Network=inference
 PublishPort=8090:8080
 
-# The HF cache, read-only: Strata cannot touch the model files. Everything it
+# The HF hub cache, read-only: Strata cannot touch the model files. Only hub/, not
+# /srv/models itself: that is HF_HOME and holds the Hugging Face token. Everything it
 # writes (pack, MTP draft layer, per-model config) goes to the strata-data volume.
-Volume=/srv/models:/srv/models:ro
+Volume=/srv/models/hub:/srv/models/hub:ro
 Volume=strata-data:/data
 
 # RTX 5090 only, by UUID so a change in device order can never hand it the 5080.

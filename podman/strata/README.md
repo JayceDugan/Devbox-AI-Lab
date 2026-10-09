@@ -14,7 +14,7 @@ or `START-HERE.bat` on the host.
 ## Day to day
 
 ```bash
-systemctl --user start strata      # not started at boot
+systemctl --user start strata      # also started at boot: see below
 systemctl --user stop strata
 systemctl --user restart strata
 systemctl --user status strata
@@ -24,7 +24,12 @@ curl localhost:8090/health         # {"status": "ok", "loaded": true, "images": 
 
 - A normal start takes a couple of minutes: ~90 s waiting on `network-online.target`
   (see Gotchas), then 1-2 min loading ~50 GB into RAM and filling the GPU's expert cache.
+- At boot, `ai-boot.timer` starts it 5 min after boot, after the RTX 5080 stack has
+  loaded, so the GPUs never load at once (`podman/ai-5080/README.md`, Startup).
 - Only one of `strata`, `vllm`, `ninfer` can run at a time: all three use the RTX 5090.
+  To boot into one of the others instead, change `strata.service` in
+  `podman/boot/ai-boot.target`, give that quadlet `After=kokoro.service`, and re-run
+  `podman/install.sh`.
 - After editing `strata.container`: `systemctl --user daemon-reload && systemctl --user restart strata`.
 
 ## Endpoints
@@ -49,7 +54,8 @@ allowed` error: add the name to `STRATA_ALLOWED_HOSTS` in the quadlet and restar
 
 ## Models
 
-The models come read-only from the HF cache (`/srv/models`, mounted `:ro`).
+The models come read-only from the HF hub cache (`/srv/models/hub`, mounted `:ro` at the
+same path; not `/srv/models` itself, which holds the HF token).
 `FAMILY`, `MODEL` and `GGUF_DIR` in the quadlet pick one:
 
 | Model | `FAMILY` | `MODEL` | `GGUF_DIR` (under `/srv/models/hub/`) |
@@ -139,7 +145,6 @@ resets everything (the next start re-downloads MTP + encoder and rebuilds packs)
 - **90 s start delay**: quadlets wait for the system's `network-online.target`, which nothing
   pulls in on this host, so every start waits out podman's 90 s timeout. Fix:
   `sudo systemctl add-wants multi-user.target network-online.target && sudo systemctl start network-online.target`.
-- `systemctl --user restart user@...` (or a reboot) also starts `unsloth`, which has
-  `WantedBy=default.target` and can see both GPUs.
+- `unsloth` is not started at boot (training only) and only sees the 5090.
 - RAM sizing: setup reads the host's 251 GB, not the 200 GB cap. Fine for every model here;
   for one whose experts exceed the cap, add `Environment=LOW_RAM=on`.

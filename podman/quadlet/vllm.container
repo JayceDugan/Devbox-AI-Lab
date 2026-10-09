@@ -7,7 +7,8 @@ Image=docker.io/vllm/vllm-openai:qwen38
 ContainerName=vllm
 Network=inference
 PublishPort=8001:8000
-Volume=/srv/models/:/root/.cache/huggingface:Z
+# Only the hub cache: /srv/models is HF_HOME and holds the Hugging Face token
+Volume=/srv/models/hub:/root/.cache/huggingface/hub:Z
 
 PodmanArgs=--device=nvidia.com/gpu=0
 

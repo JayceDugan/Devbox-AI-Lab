@@ -1,0 +1,47 @@
+# ai-5080 stack: how it starts, endpoints, VRAM -> podman/ai-5080/README.md
+[Unit]
+Description=embeddinggemma-2 text+image embeddings (vLLM nightly + PR #60631, RTX 5080)
+After=network-online.target aligner.service
+StartLimitIntervalSec=900
+StartLimitBurst=3
+
+[Container]
+# Built by podman/embeddings/build.sh. TODO(remove patch): once a vLLM release has
+# embeddinggemma-2 and PR #60631, switch to docker.io/vllm/vllm-openai:latest
+Image=localhost/ai-lab/embeddings:latest
+ContainerName=embeddings
+Network=inference
+PublishPort=8103:8000
+
+# Only the hub cache, read-only: HF_HOME (/srv/models) also holds the HF token
+Volume=/srv/models/hub:/root/.cache/huggingface/hub:ro
+Environment=HF_HUB_OFFLINE=1
+
+# RTX 5080 only, by UUID
+PodmanArgs=--device=nvidia.com/gpu=GPU-e4668f97-25e5-867c-92c5-4de87f529c42
+Environment=NVIDIA_VISIBLE_DEVICES=GPU-e4668f97-25e5-867c-92c5-4de87f529c42
+Environment=NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+DropCapability=ALL
+NoNewPrivileges=true
+
+# Text and image only (audio tower off). bf16: the model card says fp16 gives NaN
+# or silently wrong embeddings.
+Exec=--model google/embeddinggemma-2 \
+  --served-model-name embeddinggemma-2 \
+  --runner pooling \
+  --dtype bfloat16 \
+  --limit-mm-per-prompt.audio=0 \
+  --max-model-len 8192 \
+  --gpu-memory-utilization 0.2
+
+HealthCmd=python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"
+HealthInterval=10s
+HealthStartPeriod=10m
+HealthRetries=3
+Notify=healthy
+
+[Service]
+Restart=on-failure
+RestartSec=60
+TimeoutStartSec=900

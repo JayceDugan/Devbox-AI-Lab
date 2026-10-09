@@ -10,16 +10,23 @@ PublishPort=8888:8888
 Network=inference
 
 PodmanArgs=--ipc=host
-PodmanArgs=--device=nvidia.com/gpu=all
+# RTX 5090 only, by UUID: the 5080 is reserved for the ai-5080 speech/embedding stack
+PodmanArgs=--device=nvidia.com/gpu=GPU-cbd73127-475d-a971-3a16-f47d7453f0ac
+Environment=NVIDIA_VISIBLE_DEVICES=GPU-cbd73127-475d-a971-3a16-f47d7453f0ac
 
 SecurityLabelDisable=true
 Volume=%h/unsloth-workspace:/workspace/host:Z
-Volume=/srv/models:/workspace/.cache/huggingface:Z
+# Only the hub cache: /srv/models is HF_HOME and holds the Hugging Face token.
+# The rest of HF_HOME (datasets, xet cache) persists in a volume.
+Volume=unsloth-hf:/workspace/.cache/huggingface
+Volume=/srv/models/hub:/workspace/.cache/huggingface/hub:Z
+# For gated models or pushing to the Hub:
+#   printf %s "$(cat /srv/models/token)" | podman secret create hf_token -
+# Secret=hf_token,type=env,target=HF_TOKEN
 Volume=unsloth-studio:/opt/unsloth-studio
 
 [Service]
 Restart=always
 TimeoutStartSec=900
 
-[Install]
-WantedBy=default.target
+# Not started at boot: training only, start by hand (systemctl --user start unsloth)

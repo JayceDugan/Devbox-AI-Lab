@@ -1,0 +1,33 @@
+# ai-5080 stack: how it starts, endpoints, VRAM -> podman/ai-5080/README.md
+[Unit]
+Description=Qwen3-ForcedAligner-0.6B word timestamps (Transformers, RTX 5080)
+After=network-online.target asr.service
+StartLimitIntervalSec=900
+StartLimitBurst=3
+
+[Container]
+# Built by podman/aligner/build.sh
+Image=localhost/ai-lab/aligner:latest
+ContainerName=aligner
+Network=inference
+PublishPort=8102:8000
+
+# Only the hub cache, read-only: HF_HOME (/srv/models) also holds the HF token.
+# The image sets HF_HUB_CACHE=/hub and HF_HUB_OFFLINE=1.
+Volume=/srv/models/hub:/hub:ro
+
+# RTX 5080 only, by UUID
+PodmanArgs=--device=nvidia.com/gpu=GPU-e4668f97-25e5-867c-92c5-4de87f529c42
+Environment=NVIDIA_VISIBLE_DEVICES=GPU-e4668f97-25e5-867c-92c5-4de87f529c42
+Environment=NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+DropCapability=ALL
+NoNewPrivileges=true
+
+# Health check comes from the image; the next service waits for it
+Notify=healthy
+
+[Service]
+Restart=on-failure
+RestartSec=60
+TimeoutStartSec=600

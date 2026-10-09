@@ -1,0 +1,7 @@
+# Everything that serves models at boot. Started by ai-boot.timer, 5 min after boot.
+[Unit]
+Description=Inference services started at boot (RTX 5080 stack, then Strata)
+# Wants, not Requires: one failing service does not stop the rest. Load order comes
+# from the services' After= lines: asr -> aligner -> embeddings -> kokoro -> strata,
+# each waiting until the previous one has its model loaded.
+Wants=ai-5080.target strata.service

@@ -1,0 +1,8 @@
+# vLLM nightly + PR #60631, for google/embeddinggemma-2 on the RTX 5080.
+# embeddinggemma-2 support (PR #60254, 2026-10-06) is not in a stable release yet,
+# and needs the unmerged #60631 to start on sm_120. See patch_vllm.py.
+ARG BASE=docker.io/vllm/vllm-openai:nightly
+FROM ${BASE}
+
+COPY patch_vllm.py /tmp/patch_vllm.py
+RUN python3 /tmp/patch_vllm.py && rm /tmp/patch_vllm.py

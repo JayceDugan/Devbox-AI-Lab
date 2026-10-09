@@ -1,0 +1,13 @@
+# Delays model loading until 5 min after the machine boots, so the GPUs are not
+# loading models while the rest of the system starts (boot-time blackouts).
+# OnBootSec counts from kernel boot, and the user manager runs from boot
+# (lingering), so this fires with or without anyone logging in.
+[Unit]
+Description=Start the inference services 5 minutes after boot
+
+[Timer]
+OnBootSec=5min
+Unit=ai-boot.target
+
+[Install]
+WantedBy=timers.target
